@@ -1,5 +1,6 @@
 import {Component} from 'react'
 import Loader from 'react-loader-spinner'
+import {PieChart, Pie, Cell, Tooltip, Legend} from 'recharts'
 
 import LatestMatch from '../LatestMatch'
 import MatchCard from '../MatchCard'
@@ -16,6 +17,11 @@ class TeamMatches extends Component {
 
   componentDidMount() {
     this.getTeamMatches()
+  }
+
+  goBack = () => {
+    const {history} = this.props
+    history.replace('/')
   }
 
   getFormattedData = data => ({
@@ -71,6 +77,7 @@ class TeamMatches extends Component {
       <div className="responsive-container">
         <img src={teamBannerURL} alt="team banner" className="team-banner" />
         <LatestMatch latestMatchData={latestMatch} />
+        {this.renderPieChart()}
         {this.renderRecentMatchesList()}
       </div>
     )
@@ -81,6 +88,82 @@ class TeamMatches extends Component {
       <Loader type="Oval" color="#ffffff" height={50} width={50} />
     </div>
   )
+
+  renderPieChart = () => {
+    const {teamMatchesData} = this.state
+    const {recentMatches} = teamMatchesData
+
+    // Count wins and losses
+    const winCount = recentMatches.filter(match => match.matchStatus === 'Won')
+      .length
+    const lossCount = recentMatches.filter(
+      match => match.matchStatus === 'Lost',
+    ).length
+
+    const data = [
+      {name: 'Wins', value: winCount},
+      {name: 'Losses', value: lossCount},
+    ]
+
+    const COLORS = ['#0088FE', '#FF8042']
+
+    const RADIAN = Math.PI / 180
+    const renderCustomizedLabel = ({
+      cx,
+      cy,
+      midAngle,
+      innerRadius,
+      outerRadius,
+      percent,
+      index,
+    }) => {
+      const radius = innerRadius + (outerRadius - innerRadius) * 0.5
+      const x = cx + radius * Math.cos(-midAngle * RADIAN)
+      const y = cy + radius * Math.sin(-midAngle * RADIAN)
+
+      return (
+        <text
+          x={x}
+          y={y}
+          fill="white"
+          textAnchor={x > cx ? 'start' : 'end'}
+          dominantBaseline="central"
+        >
+          {`${(percent * 100).toFixed(0)}%`}
+        </text>
+      )
+    }
+
+    return (
+      <div className="pie-chart-container">
+        <PieChart width={400} height={400}>
+          <Pie
+            data={data}
+            cx={200}
+            cy={200}
+            labelLine={false}
+            label={renderCustomizedLabel}
+            outerRadius={80}
+            fill="#8884d8"
+            dataKey="value"
+          >
+            {data.map((entry, index) => (
+              <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip />
+          <Legend
+            layout="vertical"
+            align="right"
+            verticalAlign="middle"
+            formatter={value =>
+              `${value}: ${data.find(item => item.name === value).value}`
+            }
+          />
+        </PieChart>
+      </div>
+    )
+  }
 
   getRouteClassName = () => {
     const {match} = this.props
@@ -115,6 +198,9 @@ class TeamMatches extends Component {
 
     return (
       <div className={className}>
+        <button type="button" className="back-button" onClick={this.goBack}>
+          Back
+        </button>
         {isLoading ? this.renderLoader() : this.renderTeamMatches()}
       </div>
     )

@@ -1,7 +1,19 @@
 .team-matches-container {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   min-height: 100vh;
+}
+
+.back-button {
+  align-self: flex-start;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 8px 15px;
+  border-radius: 9px;
+  margin: 10px;
+  margin-bottom: 0;
 }
 
 .rcb {
@@ -65,4 +77,14 @@
   .recent-matches-list {
     margin-top: 32px;
   }
+}
+
+.pie-chart-container {
+  width: 100%;
+  background-color: #0f172a;
+  border-radius: 16px;
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
