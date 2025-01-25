@@ -1,6 +1,6 @@
 import {Component} from 'react'
 import Loader from 'react-loader-spinner'
-import {PieChart, Pie, Cell, Tooltip, Legend} from 'recharts'
+import {PieChart, Pie, Cell, Legend} from 'recharts'
 
 import LatestMatch from '../LatestMatch'
 import MatchCard from '../MatchCard'
@@ -13,6 +13,9 @@ class TeamMatches extends Component {
   state = {
     isLoading: true,
     teamMatchesData: {},
+    won: 0,
+    lost: 0,
+    draw: 0,
   }
 
   componentDidMount() {
@@ -53,7 +56,29 @@ class TeamMatches extends Component {
       ),
     }
 
-    this.setState({teamMatchesData: formattedData, isLoading: false})
+    // this.setState({teamMatchesData: formattedData, isLoading: false})
+    const {recentMatches} = formattedData
+    let won = 0
+    let lost = 0
+    let draw = 0
+
+    recentMatches.forEach(matching => {
+      if (matching.matchStatus === 'Won') {
+        won += 1
+      } else if (matching.matchStatus === 'Lost') {
+        lost += 1
+      } else {
+        draw += 1
+      }
+    })
+
+    this.setState({
+      teamMatchesData: formattedData,
+      isLoading: false,
+      won,
+      lost,
+      draw,
+    })
   }
 
   renderRecentMatchesList = () => {
@@ -70,14 +95,14 @@ class TeamMatches extends Component {
   }
 
   renderTeamMatches = () => {
-    const {teamMatchesData} = this.state
+    const {teamMatchesData, won, lost, draw} = this.state
     const {teamBannerURL, latestMatch} = teamMatchesData
 
     return (
       <div className="responsive-container">
         <img src={teamBannerURL} alt="team banner" className="team-banner" />
         <LatestMatch latestMatchData={latestMatch} />
-        {this.renderPieChart()}
+        {this.renderPieChart(won, lost, draw)}
         {this.renderRecentMatchesList()}
       </div>
     )
@@ -89,79 +114,37 @@ class TeamMatches extends Component {
     </div>
   )
 
-  renderPieChart = () => {
-    const {teamMatchesData} = this.state
-    const {recentMatches} = teamMatchesData
-
-    // Count wins and losses
-    const winCount = recentMatches.filter(match => match.matchStatus === 'Won')
-      .length
-    const lossCount = recentMatches.filter(
-      match => match.matchStatus === 'Lost',
-    ).length
-
-    const data = [
-      {name: 'Wins', value: winCount},
-      {name: 'Losses', value: lossCount},
+  renderPieChart = (won, lost, draw) => {
+    const info = [
+      {count: won, name: 'Won'},
+      {count: lost, name: 'Lost'},
+      {count: draw, name: 'Draw'},
     ]
 
-    const COLORS = ['#0088FE', '#FF8042']
-
-    const RADIAN = Math.PI / 180
-    const renderCustomizedLabel = ({
-      cx,
-      cy,
-      midAngle,
-      innerRadius,
-      outerRadius,
-      percent,
-      index,
-    }) => {
-      const radius = innerRadius + (outerRadius - innerRadius) * 0.5
-      const x = cx + radius * Math.cos(-midAngle * RADIAN)
-      const y = cy + radius * Math.sin(-midAngle * RADIAN)
-
-      return (
-        <text
-          x={x}
-          y={y}
-          fill="white"
-          textAnchor={x > cx ? 'start' : 'end'}
-          dominantBaseline="central"
-        >
-          {`${(percent * 100).toFixed(0)}%`}
-        </text>
-      )
-    }
-
     return (
-      <div className="pie-chart-container">
-        <PieChart width={400} height={400}>
-          <Pie
-            data={data}
-            cx={200}
-            cy={200}
-            labelLine={false}
-            label={renderCustomizedLabel}
-            outerRadius={80}
-            fill="#8884d8"
-            dataKey="value"
-          >
-            {data.map((entry, index) => (
-              <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip />
-          <Legend
-            layout="vertical"
-            align="right"
-            verticalAlign="middle"
-            formatter={value =>
-              `${value}: ${data.find(item => item.name === value).value}`
-            }
-          />
-        </PieChart>
-      </div>
+      <PieChart width={1000} height={300}>
+        <Pie
+          cx="50%"
+          cy="60%"
+          data={info}
+          startAngle={360}
+          endAngle={0}
+          innerRadius="30%"
+          outerRadius="70%"
+          dataKey="count"
+        >
+          <Cell name="Won" fill="green" />
+          <Cell name="Lost" fill="red" />
+          <Cell name="Draw" fill="blue" />
+        </Pie>
+        <Legend
+          iconType="circle"
+          layout="horizontal"
+          verticalAlign="bottom"
+          align="center"
+          wrapperStyle={{fontSize: 12, fontFamily: 'Roboto'}}
+        />
+      </PieChart>
     )
   }
 
